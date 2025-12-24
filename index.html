@@ -1,0 +1,929 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sorpresa per a l'Àvia Emilia</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Montserrat:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --gold: #c9a959;
+            --gold-light: #e8d5a3;
+            --gold-dark: #a88b3d;
+            --cream: #faf8f3;
+            --cream-dark: #f0ebe0;
+            --text-dark: #2c2c2c;
+            --text-muted: #5a5a5a;
+            --border-elegant: rgba(201, 169, 89, 0.3);
+        }
+
+        .dark {
+            --cream: #1a1a1a;
+            --cream-dark: #252525;
+            --text-dark: #f5f5f5;
+            --text-muted: #b0b0b0;
+            --border-elegant: rgba(201, 169, 89, 0.4);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Cormorant Garamond', Georgia, serif;
+            background: var(--cream);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            transition: background 0.3s ease;
+            overflow-x: hidden;
+        }
+
+        .puzzle-container {
+            text-align: center;
+            max-width: 500px;
+            width: 100%;
+        }
+
+        .puzzle-header {
+            margin-bottom: 25px;
+        }
+
+        .puzzle-title {
+            font-size: 28px;
+            color: var(--gold);
+            margin-bottom: 8px;
+            letter-spacing: 2px;
+        }
+
+        .puzzle-subtitle {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 13px;
+            color: var(--text-muted);
+            letter-spacing: 1px;
+        }
+
+        .puzzle-progress {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 14px;
+            color: var(--gold-dark);
+            margin-top: 10px;
+            font-weight: 500;
+        }
+
+        .puzzle-board {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 4px;
+            background: var(--gold);
+            padding: 8px;
+            border-radius: 8px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+            margin: 0 auto;
+            max-width: 340px;
+            aspect-ratio: 3/4;
+        }
+
+        .puzzle-piece {
+            aspect-ratio: 1;
+            background-size: 300% 400%;
+            border-radius: 4px;
+            cursor: grab;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+            position: relative;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: none;
+        }
+
+        .puzzle-piece:hover {
+            transform: scale(1.03);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            z-index: 10;
+        }
+
+        .puzzle-piece.dragging {
+            opacity: 0.8;
+            transform: scale(1.08);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+            z-index: 100;
+            cursor: grabbing;
+        }
+
+        .puzzle-piece.correct {
+            box-shadow: inset 0 0 0 2px var(--gold-light);
+        }
+
+        .puzzle-piece.drop-target {
+            transform: scale(0.95);
+            box-shadow: inset 0 0 0 3px var(--gold);
+        }
+
+        .shuffle-btn {
+            margin-top: 20px;
+            background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 13px;
+            font-weight: 500;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .shuffle-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(201, 169, 89, 0.4);
+        }
+
+        /* Invitation Reveal */
+        .invitation-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            pointer-events: none;
+            opacity: 0;
+            transition: all 0.8s ease;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .invitation-overlay.show {
+            background: rgba(0, 0, 0, 0.85);
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .invitation-card {
+            max-width: 480px;
+            width: 100%;
+            background: linear-gradient(145deg, var(--cream) 0%, var(--cream-dark) 100%);
+            border: 2px solid var(--gold);
+            border-radius: 8px;
+            padding: 35px 25px;
+            position: relative;
+            transform: scale(0.8) translateY(50px);
+            opacity: 0;
+            transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+            margin: auto;
+        }
+
+        .invitation-overlay.show .invitation-card {
+            transform: scale(1) translateY(0);
+            opacity: 1;
+            transition-delay: 0.3s;
+        }
+
+        .corner-ornament {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            border-color: var(--gold);
+            border-style: solid;
+            opacity: 0.7;
+        }
+
+        .corner-ornament.top-left {
+            top: 12px;
+            left: 12px;
+            border-width: 2px 0 0 2px;
+            border-radius: 8px 0 0 0;
+        }
+
+        .corner-ornament.top-right {
+            top: 12px;
+            right: 12px;
+            border-width: 2px 2px 0 0;
+            border-radius: 0 8px 0 0;
+        }
+
+        .corner-ornament.bottom-left {
+            bottom: 12px;
+            left: 12px;
+            border-width: 0 0 2px 2px;
+            border-radius: 0 0 0 8px;
+        }
+
+        .corner-ornament.bottom-right {
+            bottom: 12px;
+            right: 12px;
+            border-width: 0 2px 2px 0;
+            border-radius: 0 0 8px 0;
+        }
+
+        .header-flourish {
+            text-align: center;
+            color: var(--gold);
+            font-size: 24px;
+            letter-spacing: 8px;
+            margin-bottom: 5px;
+        }
+
+        .title {
+            text-align: center;
+            font-size: 12px;
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 300;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 20px;
+        }
+
+        .surprise-text {
+            text-align: center;
+            font-size: 22px;
+            color: var(--gold);
+            margin-bottom: 15px;
+            animation: sparkle 2s ease-in-out infinite;
+        }
+
+        @keyframes sparkle {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .photo-frame {
+            width: 100%;
+            max-width: 260px;
+            margin: 0 auto 25px;
+            border: 3px solid var(--gold);
+            border-radius: 4px;
+            padding: 6px;
+            background: var(--cream);
+        }
+
+        .photo-frame img {
+            width: 100%;
+            height: auto;
+            display: block;
+            border-radius: 2px;
+        }
+
+        .recipient-section {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .recipient-label {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 10px;
+            font-weight: 400;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: var(--gold-dark);
+            margin-bottom: 6px;
+        }
+
+        .recipient-name {
+            font-size: 26px;
+            font-weight: 500;
+            color: var(--text-dark);
+            font-style: italic;
+            line-height: 1.2;
+        }
+
+        .divider {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 20px 0;
+            gap: 12px;
+        }
+
+        .divider-line {
+            flex: 1;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--gold), transparent);
+        }
+
+        .divider-symbol {
+            color: var(--gold);
+            font-size: 16px;
+        }
+
+        .message {
+            text-align: center;
+            font-size: 17px;
+            line-height: 1.8;
+            color: var(--text-dark);
+            padding: 0 10px;
+            margin-bottom: 25px;
+        }
+
+        .message em {
+            font-style: italic;
+            color: var(--gold-dark);
+        }
+
+        .details-section {
+            background: rgba(201, 169, 89, 0.08);
+            border-radius: 6px;
+            padding: 20px 15px;
+            margin-bottom: 20px;
+            border: 1px solid var(--border-elegant);
+        }
+
+        .detail-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+            padding-bottom: 12px;
+            border-bottom: 1px dashed var(--border-elegant);
+        }
+
+        .detail-row:last-child {
+            margin-bottom: 0;
+            padding-bottom: 0;
+            border-bottom: none;
+        }
+
+        .detail-icon {
+            width: 35px;
+            text-align: center;
+            color: var(--gold);
+            font-size: 16px;
+        }
+
+        .detail-content {
+            flex: 1;
+        }
+
+        .detail-label {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 9px;
+            font-weight: 500;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 3px;
+        }
+
+        .detail-value {
+            font-size: 16px;
+            font-style: italic;
+            color: var(--text-dark);
+        }
+
+        .detail-placeholder {
+            color: var(--gold);
+            opacity: 0.7;
+        }
+
+        .closing {
+            text-align: center;
+            margin-top: 25px;
+        }
+
+        .closing-text {
+            font-size: 14px;
+            color: var(--text-muted);
+            font-style: italic;
+            margin-bottom: 10px;
+        }
+
+        .signature {
+            font-size: 20px;
+            font-weight: 500;
+            color: var(--gold-dark);
+            font-style: italic;
+        }
+
+        .footer-flourish {
+            text-align: center;
+            color: var(--gold);
+            font-size: 18px;
+            margin-top: 20px;
+            letter-spacing: 6px;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: -15px;
+            right: -15px;
+            width: 36px;
+            height: 36px;
+            background: var(--gold);
+            border: none;
+            border-radius: 50%;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .close-btn:hover {
+            background: var(--gold-dark);
+            transform: scale(1.1);
+        }
+
+        .confetti {
+            position: fixed;
+            pointer-events: none;
+            z-index: 1001;
+        }
+
+        .print-button {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 12px;
+            font-weight: 500;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            border-radius: 6px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(201, 169, 89, 0.4);
+            transition: all 0.3s ease;
+            z-index: 1002;
+            display: none;
+        }
+
+        .print-button.show {
+            display: block;
+        }
+
+        .print-button:hover {
+            transform: translateY(-2px);
+        }
+
+        @media (max-width: 480px) {
+            .puzzle-board {
+                max-width: 300px;
+            }
+
+            .puzzle-title {
+                font-size: 24px;
+            }
+
+            .invitation-card {
+                padding: 25px 18px;
+            }
+
+            .recipient-name {
+                font-size: 22px;
+            }
+
+            .message {
+                font-size: 15px;
+            }
+
+            .corner-ornament {
+                width: 35px;
+                height: 35px;
+            }
+
+            .print-button {
+                top: 10px;
+                right: 10px;
+                padding: 10px 16px;
+                font-size: 10px;
+            }
+        }
+
+        @media print {
+            @page {
+                size: A4;
+                margin: 15mm;
+            }
+
+            html, body {
+                background: white !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+
+            .puzzle-container, .print-button, .close-btn {
+                display: none !important;
+            }
+
+            .invitation-overlay {
+                position: static !important;
+                background: transparent !important;
+                opacity: 1 !important;
+                pointer-events: all !important;
+                padding: 0 !important;
+            }
+
+            .invitation-card {
+                transform: none !important;
+                opacity: 1 !important;
+                max-width: 100% !important;
+                box-shadow: none !important;
+                background: #faf8f3 !important;
+                border: 2px solid #c9a959 !important;
+            }
+
+            .surprise-text {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="puzzle-container">
+        <div class="puzzle-header">
+            <div class="puzzle-title">✨ Sorpresa per a l'Àvia ✨</div>
+            <div class="puzzle-subtitle">Resol el puzle per descobrir el missatge!</div>
+            <div class="puzzle-progress" id="progress">Peces correctes: 0 / 12</div>
+        </div>
+
+        <div class="puzzle-board" id="puzzleBoard"></div>
+
+        <button class="shuffle-btn" id="shuffleBtn">🔀 Barrejar</button>
+    </div>
+
+    <div class="invitation-overlay" id="invitationOverlay">
+        <div class="invitation-card">
+            <button class="close-btn" id="closeBtn">×</button>
+            <div class="corner-ornament top-left"></div>
+            <div class="corner-ornament top-right"></div>
+            <div class="corner-ornament bottom-left"></div>
+            <div class="corner-ornament bottom-right"></div>
+
+            <div class="header-flourish">✦ ✦ ✦</div>
+            <div class="title">Invitació Especial</div>
+
+            <div class="surprise-text">🎉 Felicitats! Has resolt el puzle! 🎉</div>
+
+            <div class="photo-frame">
+                <img src="https://pfst.cf2.poecdn.net/base/image/2e075d1e82b15dfab2a3f5791a63667608f1f3ea5cec029e006735d48a983be5?w=2390&h=3187" alt="Els nets">
+            </div>
+
+            <div class="recipient-section">
+                <div class="recipient-label">Per a la nostra estimada</div>
+                <div class="recipient-name">Emilia Mestres Margarit</div>
+            </div>
+
+            <div class="divider">
+                <div class="divider-line"></div>
+                <div class="divider-symbol">❧</div>
+                <div class="divider-line"></div>
+            </div>
+
+            <div class="message">
+                Benvolguda àvia,<br><br>
+                Els teus nets et convidem amb tot el nostre amor a un <em>dinar molt especial</em> només per a tu i nosaltres.<br><br>
+                Volem celebrar la sort que tenim de tenir-te, compartir riures, records i crear nous moments junts.
+            </div>
+
+            <div class="details-section">
+                <div class="detail-row">
+                    <div class="detail-icon">🍽</div>
+                    <div class="detail-content">
+                        <div class="detail-label">Restaurant</div>
+                        <div class="detail-value"><span class="detail-placeholder">Per confirmar</span></div>
+                    </div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-icon">📅</div>
+                    <div class="detail-content">
+                        <div class="detail-label">Data</div>
+                        <div class="detail-value"><span class="detail-placeholder">Per confirmar</span></div>
+                    </div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-icon">🕐</div>
+                    <div class="detail-content">
+                        <div class="detail-label">Hora</div>
+                        <div class="detail-value"><span class="detail-placeholder">Per confirmar</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="closing">
+                <div class="closing-text">Amb tot el nostre amor i estima,</div>
+                <div class="signature">Els teus nets</div>
+            </div>
+
+            <div class="footer-flourish">✦ ✦ ✦</div>
+        </div>
+    </div>
+
+    <button class="print-button" id="printBtn">🖨️ Imprimir</button>
+
+    <script>
+        // Dark mode detection
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.documentElement.classList.add('dark');
+        }
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
+            if (event.matches) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        });
+
+        const imageUrl = 'https://pfst.cf2.poecdn.net/base/image/2e075d1e82b15dfab2a3f5791a63667608f1f3ea5cec029e006735d48a983be5?w=2390&h=3187';
+        const COLS = 3;
+        const ROWS = 4;
+        const TOTAL_PIECES = COLS * ROWS;
+
+        let pieces = [];
+        let draggedPiece = null;
+        let draggedIndex = null;
+        let solved = false;
+
+        function init() {
+            const board = document.getElementById('puzzleBoard');
+            board.innerHTML = '';
+            pieces = [];
+            solved = false;
+
+            // Create pieces with their correct positions
+            for (let i = 0; i < TOTAL_PIECES; i++) {
+                pieces.push({
+                    correctIndex: i,
+                    currentIndex: i
+                });
+            }
+
+            // Shuffle pieces
+            shufflePieces();
+            renderBoard();
+        }
+
+        function shufflePieces() {
+            for (let i = pieces.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [pieces[i], pieces[j]] = [pieces[j], pieces[i]];
+            }
+            // Update current indices
+            pieces.forEach((piece, index) => {
+                piece.currentIndex = index;
+            });
+        }
+
+        function renderBoard() {
+            const board = document.getElementById('puzzleBoard');
+            board.innerHTML = '';
+
+            pieces.forEach((piece, index) => {
+                const div = document.createElement('div');
+                div.className = 'puzzle-piece';
+                div.dataset.index = index;
+                div.dataset.correctIndex = piece.correctIndex;
+
+                // Calculate background position
+                const col = piece.correctIndex % COLS;
+                const row = Math.floor(piece.correctIndex / COLS);
+                div.style.backgroundImage = `url('${imageUrl}')`;
+                div.style.backgroundPosition = `${col * 50}% ${row * 33.33}%`;
+
+                // Check if piece is in correct position
+                if (piece.correctIndex === index) {
+                    div.classList.add('correct');
+                }
+
+                // Mouse events
+                div.addEventListener('mousedown', handleDragStart);
+                div.addEventListener('mouseenter', handleDragEnter);
+                div.addEventListener('mouseleave', handleDragLeave);
+
+                // Touch events
+                div.addEventListener('touchstart', handleTouchStart, { passive: false });
+                div.addEventListener('touchmove', handleTouchMove, { passive: false });
+                div.addEventListener('touchend', handleTouchEnd);
+
+                board.appendChild(div);
+            });
+
+            updateProgress();
+        }
+
+        function handleDragStart(e) {
+            if (solved) return;
+            draggedPiece = e.target;
+            draggedIndex = parseInt(e.target.dataset.index);
+            e.target.classList.add('dragging');
+
+            document.addEventListener('mouseup', handleDragEnd);
+        }
+
+        function handleDragEnter(e) {
+            if (!draggedPiece || e.target === draggedPiece || solved) return;
+            e.target.classList.add('drop-target');
+        }
+
+        function handleDragLeave(e) {
+            e.target.classList.remove('drop-target');
+        }
+
+        function handleDragEnd(e) {
+            if (!draggedPiece) return;
+
+            const allPieces = document.querySelectorAll('.puzzle-piece');
+            let targetPiece = null;
+
+            allPieces.forEach(piece => {
+                piece.classList.remove('drop-target');
+                if (piece.classList.contains('drop-target') ||
+                    (e.target && e.target.classList && e.target.classList.contains('puzzle-piece') && e.target !== draggedPiece)) {
+                    targetPiece = e.target;
+                }
+            });
+
+            // Find the piece under the mouse
+            const elemUnderMouse = document.elementFromPoint(e.clientX, e.clientY);
+            if (elemUnderMouse && elemUnderMouse.classList.contains('puzzle-piece') && elemUnderMouse !== draggedPiece) {
+                swapPieces(draggedIndex, parseInt(elemUnderMouse.dataset.index));
+            }
+
+            draggedPiece.classList.remove('dragging');
+            draggedPiece = null;
+            draggedIndex = null;
+
+            document.removeEventListener('mouseup', handleDragEnd);
+        }
+
+        // Touch handling
+        let touchStartIndex = null;
+
+        function handleTouchStart(e) {
+            if (solved) return;
+            e.preventDefault();
+            const touch = e.touches[0];
+            const target = e.target;
+            touchStartIndex = parseInt(target.dataset.index);
+            target.classList.add('dragging');
+        }
+
+        function handleTouchMove(e) {
+            if (touchStartIndex === null || solved) return;
+            e.preventDefault();
+
+            const touch = e.touches[0];
+            const allPieces = document.querySelectorAll('.puzzle-piece');
+
+            allPieces.forEach(piece => {
+                const rect = piece.getBoundingClientRect();
+                if (touch.clientX >= rect.left && touch.clientX <= rect.right &&
+                    touch.clientY >= rect.top && touch.clientY <= rect.bottom) {
+                    if (parseInt(piece.dataset.index) !== touchStartIndex) {
+                        piece.classList.add('drop-target');
+                    }
+                } else {
+                    piece.classList.remove('drop-target');
+                }
+            });
+        }
+
+        function handleTouchEnd(e) {
+            if (touchStartIndex === null || solved) return;
+
+            const allPieces = document.querySelectorAll('.puzzle-piece');
+            let targetIndex = null;
+
+            allPieces.forEach(piece => {
+                if (piece.classList.contains('drop-target')) {
+                    targetIndex = parseInt(piece.dataset.index);
+                }
+                piece.classList.remove('dragging');
+                piece.classList.remove('drop-target');
+            });
+
+            if (targetIndex !== null && targetIndex !== touchStartIndex) {
+                swapPieces(touchStartIndex, targetIndex);
+            }
+
+            touchStartIndex = null;
+        }
+
+        function swapPieces(index1, index2) {
+            [pieces[index1], pieces[index2]] = [pieces[index2], pieces[index1]];
+            pieces[index1].currentIndex = index1;
+            pieces[index2].currentIndex = index2;
+            renderBoard();
+            checkWin();
+        }
+
+        function updateProgress() {
+            let correct = 0;
+            pieces.forEach((piece, index) => {
+                if (piece.correctIndex === index) correct++;
+            });
+            document.getElementById('progress').textContent = `Peces correctes: ${correct} / ${TOTAL_PIECES}`;
+        }
+
+        function checkWin() {
+            const isComplete = pieces.every((piece, index) => piece.correctIndex === index);
+
+            if (isComplete && !solved) {
+                solved = true;
+                setTimeout(() => {
+                    showInvitation();
+                }, 500);
+            }
+        }
+
+        function showInvitation() {
+            createConfetti();
+            const overlay = document.getElementById('invitationOverlay');
+            overlay.classList.add('show');
+            document.getElementById('printBtn').classList.add('show');
+        }
+
+        function hideInvitation() {
+            const overlay = document.getElementById('invitationOverlay');
+            overlay.classList.remove('show');
+            document.getElementById('printBtn').classList.remove('show');
+        }
+
+        function createConfetti() {
+            const colors = ['#c9a959', '#e8d5a3', '#a88b3d', '#ffd700', '#fff'];
+            const confettiCount = 100;
+
+            for (let i = 0; i < confettiCount; i++) {
+                setTimeout(() => {
+                    const confetti = document.createElement('div');
+                    confetti.className = 'confetti';
+                    confetti.style.cssText = `
+                        left: ${Math.random() * 100}vw;
+                        top: -20px;
+                        width: ${Math.random() * 10 + 5}px;
+                        height: ${Math.random() * 10 + 5}px;
+                        background: ${colors[Math.floor(Math.random() * colors.length)]};
+                        border-radius: ${Math.random() > 0.5 ? '50%' : '0'};
+                        transform: rotate(${Math.random() * 360}deg);
+                    `;
+                    document.body.appendChild(confetti);
+
+                    const duration = Math.random() * 3000 + 2000;
+                    const startTime = performance.now();
+                    const startX = parseFloat(confetti.style.left);
+
+                    function animateConfetti(currentTime) {
+                        const elapsed = currentTime - startTime;
+                        const progress = elapsed / duration;
+
+                        if (progress < 1) {
+                            const y = progress * (window.innerHeight + 40);
+                            const x = startX + Math.sin(progress * 10) * 50;
+                            const rotation = progress * 720;
+
+                            confetti.style.top = `${y}px`;
+                            confetti.style.left = `${x}vw`;
+                            confetti.style.transform = `rotate(${rotation}deg)`;
+                            confetti.style.opacity = 1 - progress * 0.5;
+
+                            requestAnimationFrame(animateConfetti);
+                        } else {
+                            confetti.remove();
+                        }
+                    }
+
+                    requestAnimationFrame(animateConfetti);
+                }, i * 30);
+            }
+        }
+
+        // Event listeners
+        document.getElementById('shuffleBtn').addEventListener('click', () => {
+            solved = false;
+            shufflePieces();
+            renderBoard();
+        });
+
+        document.getElementById('closeBtn').addEventListener('click', hideInvitation);
+
+        document.getElementById('invitationOverlay').addEventListener('click', (e) => {
+            if (e.target === e.currentTarget) {
+                hideInvitation();
+            }
+        });
+
+        document.getElementById('printBtn').addEventListener('click', () => {
+            window.print();
+        });
+
+        // Initialize puzzle
+        init();
+    </script>
+</body>
+</html>
